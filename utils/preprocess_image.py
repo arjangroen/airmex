@@ -6,10 +6,10 @@ import numpy as np
 
 
 def preprocess(
-    image: np.ndarray,
-    min_hw_ratio: int = 1,
-    output_width: int = 299,
-    output_height: int = 299,
+        image: np.ndarray,
+        min_hw_ratio: int = 1,
+        output_width: int = 299,
+        output_height: int = 299,
 ) -> np.ndarray:
     """"
     Function to preprocess images before making predictions
@@ -27,7 +27,7 @@ def preprocess(
     r_to_delete = rows - r_to_keep
     remove_from_top = int(math.ceil(r_to_delete / 2))
     remove_from_bottom = int(math.floor(r_to_delete / 2))
-    image_top_bottom_trimmed = image[remove_from_top : (rows - remove_from_bottom), :]
+    image_top_bottom_trimmed = image[remove_from_top: (rows - remove_from_bottom), :]
 
     # resample to get the desired image size
     image_resampled = cv2.resize(
@@ -40,7 +40,7 @@ def preprocess(
     image_clean = image_resampled - np.mean(image_resampled)
     image_clean = image_clean / np.std(image_clean)
     image_clean = (image_clean - np.min(image_clean)) / (
-        np.max(image_clean) - np.min(image_clean)
+            np.max(image_clean) - np.min(image_clean)
     )
 
     # Stack into three channels
