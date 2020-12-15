@@ -18,8 +18,7 @@ def test_rebuild_model():
 
 def test_preprocess():
     """Tests the preprocessing of images"""
-    root_dir = Path(__file__).parent.parent
-    img_path = os.path.join(root_dir, "data/test/example_input.jpg")
+    img_path = os.path.join("data/mendeley/kneeKL299/train/0/9001695L.png")
     img = cv2.imread(img_path, 0).astype("float")
     processed_image = preprocess(img)
     assert isinstance(processed_image, np.ndarray)
@@ -28,8 +27,7 @@ def test_preprocess():
 
 def test_predict():
     """Tests the predict function by predicting a sample image"""
-    root_dir = Path(__file__).parent.parent
-    img_path = os.path.join(root_dir, "data/test/example_input.jpg")
+    img_path = os.path.join("data/mendeley/kneeKL299/train/4/9039627L.png")
     img = cv2.imread(img_path, 0).astype("float")
     processed_image = preprocess(img)
     logits, probabilities = predict(processed_image)
