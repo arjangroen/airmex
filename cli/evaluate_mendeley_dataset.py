@@ -16,10 +16,14 @@ model = rebuild_kneenet()
 
 kl=-1
 
+stop_after = 10  # Reduce the amount of samples to evaluate for quicker results. -1 for "all"
+
 for filepath_kl in filepaths:
     count = 0
     kl+=1
     for filename in os.listdir(filepath_kl):
+        if stop_after != -1 and stop_after <= count:
+            break
         img = cv2.imread(os.path.join(filepath_kl, filename), 0).astype("float")
         processed_image = preprocess(img)
         logits, probabilities = predict(processed_image)
@@ -29,5 +33,7 @@ for filepath_kl in filepaths:
 
 report = classification_report(actuals, predictions, target_names=target_names)
 
-with open('testreport','w') as file:
+stop_after_str = 'all' if stop_after == -1 else str(stop_after)
+filename = 'testresults_' + stop_after_str + '.txt'
+with open(filename,'w') as file:
     file.write(report)
