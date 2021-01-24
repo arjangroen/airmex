@@ -14,7 +14,6 @@ class Airmex(object):
                  data_load_fn: Callable = load_images
                  ):
         """
-
         Args:
             model_build_fn:
             data_load_fn:
