@@ -4,7 +4,7 @@ import cv2
 import torch
 
 
-def load_images(n_images_per_score: int = 1):
+def load_images(n_images_per_score: int = 1, return_labels: bool = False):
     """
     Loads n images per KL score folder from test and makes them ready for pytorch prediction
     Args:
@@ -16,6 +16,7 @@ def load_images(n_images_per_score: int = 1):
     """
     img_folders = ['data/mendeley/kneeKL299/test/' + str(x) for x in range(5)]
     images = []
+    labels = []
     for img_folder in img_folders:
         first_n_files = os.listdir(img_folder)[:n_images_per_score]
         for file in first_n_files:
@@ -26,6 +27,10 @@ def load_images(n_images_per_score: int = 1):
             input_image = input_image.float()
 
             images.append(input_image)
+            labels.append(img_folder)
 
     images = torch.cat(images, dim=0)
-    return images
+    if return_labels:
+        return images, labels
+    else:
+        return images

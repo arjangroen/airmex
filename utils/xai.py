@@ -1,30 +1,27 @@
-from captum.attr import DeepLift
 from typing import Callable
 from utils.model import rebuild_kneenet
 from utils.load_images import load_images
+import torch.nn as nn
+
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class Airmex(object):
 
-    def __init__(self,
-                 attr_model,
-                 model_build_fn: Callable = rebuild_kneenet,
-                 data_load_fn: Callable = load_images
-                 ):
+    def __init__(self):
         """
         Args:
-            model_build_fn:
-            data_load_fn:
+            model_build_fn: function that return a deep learning model
+            data_load_fn: function that returns data
         """
-        self.attr_model = attr_model
-        self.model = model_build_fn()
-        self.images = data_load_fn()
 
-    def explain(self, target=4):
-        attr_model = self.attr_model(self.model, multiply_by_inputs=True)
-        attr = attr_model.attribute(self.images, target=target).detach().numpy()
+    def explain(self, dl_model, xai_model, image, baseline, multiply_by_inputs=True):
+        prediction_logits = dl_model(image)[0]
+        prediction_probas = nn.Softmax()
+        target = np.argmax(prediction_probas)
+
+        attr_model = xai_model(dl_model, multiply_by_inputs=True)
+        attr = attr_model.attribute(image, target=target).detach().numpy()
         return np.rollaxis(attr, 1, 4)
 
     def project_deeplift(self, attr, img, alpha=1):
@@ -56,12 +53,3 @@ class Airmex(object):
         img = img - img.min()
         img = img / img.max()
         return img
-
-
-if __name__ == "__main__":
-    a = Airmex(attr_model=DeepLift)
-    attr = a.explain()[4]
-    img = np.rollaxis(a.images[4].detach().numpy(), 0, 3)
-    projection = a.project_deeplift(attr, img)
-    plt.imshow(projection)
-    plt.show()
