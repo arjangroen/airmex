@@ -24,3 +24,8 @@ def preprocess(
     prepocessed_image = (image_clean_stacked - imagenet_mean) / imagenet_std
 
     return prepocessed_image
+
+def normalize_minmax(values: np.ndarray):
+    values = values - values.min()
+    values = values / values.max()
+    return values
