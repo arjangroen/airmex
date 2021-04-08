@@ -10,3 +10,4 @@ torchvision==0.2.1
 sklearn
 matplotlib==3.2
 captum
+dash
