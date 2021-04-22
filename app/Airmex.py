@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from utils.preprocess_image import preprocess, normalize_minmax
 from utils.model import rebuild_kneenet
-from captum.attr import DeepLift
+from captum.attr import DeepLift, GuidedGradCam
 import torch.nn as nn
 import torch
 import plotly.express as px
@@ -14,19 +14,20 @@ from dash.dependencies import Input, Output
 
 class Airmex(dash.Dash):
 
-    def __init__(self):
+    def __init__(self, xai=DeepLift):
         super(Airmex, self).__init__(__name__)
-        self.library_path = r'data/mendeley/kneeKL299/test'
+        # self.library_path = r'data/mendeley/kneeKL299/test'
+        self.library_path = r'../data/mendeley/kneeKL299/test'
         self.images = {}
         self.init_image_library()
         self.load_images()
         self.model = rebuild_kneenet()
         self.select_image()
-        self.select_xai()
+        self.select_xai(xai)
         self.select_baseline()
         self.attr = self.run_xai()
+        self.run_projection()
         self.set_layout()
-
 
     def init_image_library(self):
         self.library = {}
@@ -41,18 +42,19 @@ class Airmex(dash.Dash):
             count = 0
             self.images[label_folder] = []
             for filename in filenames:
-                image = cv2.imread(os.path.join(self.library_path, label_folder, filename),0).astype(float)
+                image = cv2.imread(os.path.join(self.library_path, label_folder, filename), 0)
                 image = preprocess(image)
-                image = torch.from_numpy(image)
+                image = torch.from_numpy(image).float().unsqueeze(0)
                 self.images[label_folder].append(image)
-                count +=1
+                count += 1
                 if count == n:
                     break
 
-    def select_xai(self):
-        self.xai = DeepLift
+    def select_xai(self, xai):
+        self.xai = xai
 
     def select_image(self, kl='3', idx=3):
+        # self.image = self.images[kl][idx]
         self.image = self.images[kl][idx]
 
     def select_baseline(self, kl='1', idx=3):
@@ -66,12 +68,17 @@ class Airmex(dash.Dash):
         softmax = nn.Softmax(dim=0)
         prediction_probas = softmax(prediction_logits)
         explain_label = int(np.argmax(prediction_probas))
-        attr_model = self.xai(self.model, multiply_by_inputs=True)
+        if self.xai == DeepLift:
+            attr_model = self.xai(self.model, multiply_by_inputs=True)
+        if self.xai == GuidedGradCam:
+            attr_model = self.xai(self.model, layer=self.model.features.denseblock4.denselayer32.conv2)
         attr = attr_model.attribute(self.image, target=explain_label, **kwargs).detach().numpy()
         return np.rollaxis(attr, 1, 4)
 
     def run_projection(self):
-        self.projection = normalize_minmax(normalize_minmax(self.attr) + normalize_minmax(self.image))
+        image = self.image.detach().numpy()
+        image = np.rollaxis(image, 1, 4)
+        self.projection = normalize_minmax(normalize_minmax(self.attr) + normalize_minmax(image))
 
     def set_layout(self):
         fig = px.imshow(self.projection[0])
@@ -103,7 +110,7 @@ class Airmex(dash.Dash):
 
 
 if __name__ == '__main__':
-    a = Airmex()
+    a = Airmex(GuidedGradCam)
     a.init_image_library()
     a.load_images()
     print('done')
